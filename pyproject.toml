@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "materialsearch-core"
+version = "0.0.9"
+authors = [
+  { name="Yumin Li", email="yumin-li@foxmail.com" },
+]
+description = "Core library for MaterialSearch project"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "LGPL-3.0-only"
+license-files = ["LICENSE"]
+keywords = ["materialsearch", "clip", "semantic search"]
+dependencies = [
+    "requests>=2.31.0",
+    "SQLAlchemy>=2.0.20",
+    "torch>=2.0",
+    "transformers>=4.28.1",
+    "accelerate>=1.5.0",
+    "opencv-python-headless>=4.7.0.68",
+    "Pillow>=8.1.0",
+    "pillow-heif>=0.14.0",
+    "numpy>=1.20.3,<2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/chn-lee-yumi/MaterialSearch-core"
+Documentation = "https://github.com/chn-lee-yumi/MaterialSearch-core"
