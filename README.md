@@ -20,7 +20,7 @@ pip3 install -U build twine packaging
 
 ```bash
 python3 -m build
-python3 -m twine upload --repository testpypi dist/*
+python3 -m twine upload --repository testpypi dist/* --verbose
 python3 -m pip install -U --index-url https://test.pypi.org/simple/ --no-deps materialsearch-core
 ```
 
