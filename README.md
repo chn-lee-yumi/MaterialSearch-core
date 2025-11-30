@@ -31,3 +31,5 @@ python3 -m build
 python3 -m twine upload dist/*
 python3 -m pip install materialsearch-core
 ```
+
+Or use GitHub Actions to build and publish. Create a release will trigger the workflow.
