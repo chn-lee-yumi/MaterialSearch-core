@@ -10,6 +10,8 @@ pip3 install materialsearch-core
 
 ## Building and Distributing
 
+Remember to update the version number in `materialsearch_core/__init__.py` and `pyproject.toml` before building.
+
 Install dependencies before building:
 
 ```bash
