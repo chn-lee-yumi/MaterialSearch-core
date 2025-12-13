@@ -1,8 +1,10 @@
 """
 一些通用的工具函数
 """
+import datetime
 import hashlib
 import logging
+import os
 import platform
 import subprocess
 
@@ -63,6 +65,21 @@ def get_file_hash(file_path):
     except Exception as e:
         logger.error(f"计算文件hash出错：{file_path} {repr(e)}")
         return None
+
+
+def get_modify_time(file_path):
+    """
+    获取文件的最后修改时间（时间戳）
+    :param file_path: Path, 文件路径
+    :return: float, 时间戳
+    """
+    modify_time = os.path.getmtime(str(file_path))
+    try:  # 尝试把modify_time转换成datetime用来写入数据库
+        modify_time = datetime.datetime.fromtimestamp(modify_time)
+    except Exception as e:  # 如果无法转换修改日期，则改为checksum
+        logger.warning("文件修改日期有问题：", str(file_path), modify_time, "导致datetime转换报错", repr(e))
+        modify_time = None
+    return modify_time
 
 
 def softmax(x):

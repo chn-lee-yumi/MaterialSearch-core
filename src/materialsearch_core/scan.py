@@ -12,9 +12,11 @@ from materialsearch_core.database import (
     get_image_count,
     get_video_count,
     get_video_frame_count,
+    get_image_modify_time_and_hash,
+    get_video_modify_time_and_hash,
     delete_record_if_not_exist,
-    delete_image_if_changed,
-    delete_video_if_changed,
+    delete_image,
+    delete_video,
     add_image,
     add_video,
     check_duplicate_image,
@@ -23,7 +25,7 @@ from materialsearch_core.database import (
 from materialsearch_core.models import create_tables, DatabaseSession
 from materialsearch_core.process_assets import process_images, process_video
 from materialsearch_core.search import clean_cache
-from materialsearch_core.utils import get_file_hash
+from materialsearch_core.utils import get_file_hash, get_modify_time
 
 
 class Scanner:
@@ -169,13 +171,7 @@ class Scanner:
         # 遍历根目录及其子目录下的所有文件
         for path in paths:
             for file in filter(self.filter_path, path.rglob("*")):
-                modify_time = os.path.getmtime(str(file))
-                try:  # 尝试把modify_time转换成datetime用来写入数据库
-                    modify_time = datetime.datetime.fromtimestamp(modify_time)
-                except Exception as e:  # 如果无法转换修改日期，则改为checksum
-                    self.logger.warning("文件修改日期有问题：", str(file), modify_time, "导致datetime转换报错", repr(e))
-                    modify_time = None
-                self.assets[str(file)] = modify_time
+                self.assets[str(file)] = get_modify_time(file)
 
     def handle_image_batch(self, session, image_batch_dict):
         path_list, features_list = process_images(list(image_batch_dict.keys()))
@@ -214,13 +210,25 @@ class Scanner:
                 if not os.path.isfile(path):
                     continue
                 modify_time = self.assets[path]
-                checksum = get_file_hash(path)
+                checksum = None
+                if modify_time is None:
+                    checksum = get_file_hash(path)
                 # 如果数据库里有这个文件，并且没有发生变化，则跳过，否则进行预处理并入库
                 if path.lower().endswith(IMAGE_EXTENSIONS):  # 图片
-                    not_modified = delete_image_if_changed(session, path, checksum)
-                    if not_modified:
+                    old_modify_time, old_checksum = get_image_modify_time_and_hash(session, path)
+                    # 先判断修改时间是否有变化
+                    if old_modify_time is not None and modify_time == old_modify_time:  # 文件未修改，跳过
                         del self.assets[path]
                         continue
+                    # 然后判断hash是否有变化
+                    if checksum is None:
+                        checksum = get_file_hash(path)
+                    if checksum == old_checksum:  # 文件未修改，跳过
+                        del self.assets[path]
+                        continue
+                    else:  # 文件修改了，删除原有记录
+                        delete_image(path)
+                    # 需要新增，下面进行预处理
                     # 检查是否为重复图片，如果是则跳过feature提取，直接添加记录
                     is_duplicate = check_duplicate_image(session, path, modify_time, checksum, auto_add=True)
                     if is_duplicate:
@@ -234,10 +242,20 @@ class Scanner:
                         image_batch_dict = {}
                     continue
                 if path.lower().endswith(VIDEO_EXTENSIONS):  # 视频
-                    not_modified = delete_video_if_changed(session, path, checksum)
-                    if not_modified:
+                    old_modify_time, old_checksum = get_video_modify_time_and_hash(session, path)
+                    # 先判断修改时间是否有变化
+                    if old_modify_time is not None and modify_time == old_modify_time:  # 文件未修改，跳过
                         del self.assets[path]
                         continue
+                    # 然后判断hash是否有变化
+                    if checksum is None:
+                        checksum = get_file_hash(path)
+                    if checksum == old_checksum:  # 文件未修改，跳过
+                        del self.assets[path]
+                        continue
+                    else:  # 文件修改了，删除原有记录
+                        delete_video(path)
+                    # 需要新增，下面进行预处理
                     # 检查是否为重复视频，如果是则跳过feature提取，直接添加记录
                     is_duplicate = check_duplicate_video(session, path, modify_time, checksum, auto_add=True)
                     if is_duplicate:

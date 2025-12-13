@@ -38,41 +38,51 @@ def get_image_count(session: Session):
     return session.query(Image).count()
 
 
-def delete_image_if_changed(session: Session, path: str, checksum: str) -> bool:
+def get_image_modify_time_and_hash(session: Session, path: str) -> tuple[datetime.datetime, str]:
+    """
+    获取图片的修改时间和hash
+    :param session: Session, 数据库 session
+    :param path: str, 图片路径
+    :return: (datetime, str), 修改时间和hash
+    """
+    record = session.query(Image.modify_time, Image.checksum).filter_by(path=path).first()
+    if not record:
+        return None, None
+    return record[0], record[1]
+
+
+def get_video_modify_time_and_hash(session: Session, path: str) -> tuple[datetime.datetime, str]:
+    """
+    获取视频的修改时间和hash
+    :param session: Session, 数据库 session
+    :param path: str, 视频路径
+    :return: (datetime, str), 修改时间和hash
+    """
+    record = session.query(Video.modify_time, Video.checksum).filter_by(path=path).first()
+    if not record:
+        return None, None
+    return record[0], record[1]
+
+
+def delete_image(session: Session, path: str):
     """
     判断图片是否修改，若修改则删除原来的记录
     :param session: Session, 数据库 session
     :param path: str, 图片路径
-    :param checksum: str, 图片hash
     :return: bool, 若文件未修改返回 True
     """
     record = session.query(Image).filter_by(path=path).first()
-    if not record:
-        return False
-    if record.checksum == checksum:
-        logger.debug(f"文件无变更，跳过：{path}")
-        return True
-    logger.info(f"文件有更新：{path}")
     session.delete(record)  # 删除图片记录
     session.commit()
-    return False
 
 
-def delete_video_if_changed(session: Session, path: str, checksum: str) -> bool:
+def delete_video(session: Session, path: str):
     """
     判断视频是否修改，若修改则删除
     :param session: Session, 数据库 session
     :param path: str, 视频路径
-    :param checksum: str, 视频hash
-    :return: bool, 若文件未修改返回 True
     """
     record = session.query(Video).filter_by(path=path).first()
-    if not record:
-        return False
-    if record.checksum == checksum:
-        logger.debug(f"文件无变更，跳过：{path}")
-        return True
-    logger.info(f"文件有更新：{path}")
     session.delete(record)
     session.commit()
     return False
