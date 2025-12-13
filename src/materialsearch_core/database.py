@@ -71,9 +71,11 @@ def delete_image(session: Session, path: str):
     :param path: str, 图片路径
     :return: bool, 若文件未修改返回 True
     """
-    record = session.query(Image).filter_by(path=path).first()
-    session.delete(record)  # 删除图片记录
-    session.commit()
+    file = session.query(Image).filter_by(path=path).first()
+    if file:
+        logger.info(f"文件已删除：{file.path}")
+        session.delete(file)  # 删除图片记录
+        session.commit()
 
 
 def delete_video(session: Session, path: str):
@@ -82,10 +84,11 @@ def delete_video(session: Session, path: str):
     :param session: Session, 数据库 session
     :param path: str, 视频路径
     """
-    record = session.query(Video).filter_by(path=path).first()
-    session.delete(record)
-    session.commit()
-    return False
+    file = session.query(Video).filter_by(path=path).first()
+    if file:
+        logger.info(f"文件已删除：{file.path}")
+        session.delete(file)
+        session.commit()
 
 
 def get_video_paths(session: Session, filter_path: str = None, start_time: int = None, end_time: int = None):

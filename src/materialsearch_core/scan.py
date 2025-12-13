@@ -227,7 +227,8 @@ class Scanner:
                         del self.assets[path]
                         continue
                     else:  # 文件修改了，删除原有记录
-                        delete_image(path)
+                        self.logger.debug(f"文件修改，删除原有记录：{path}, {old_modify_time} -> {modify_time}, {old_checksum} -> {checksum}")
+                        delete_image(session, path)
                     # 需要新增，下面进行预处理
                     # 检查是否为重复图片，如果是则跳过feature提取，直接添加记录
                     is_duplicate = check_duplicate_image(session, path, modify_time, checksum, auto_add=True)
@@ -254,7 +255,8 @@ class Scanner:
                         del self.assets[path]
                         continue
                     else:  # 文件修改了，删除原有记录
-                        delete_video(path)
+                        self.logger.debug(f"文件修改，删除原有记录：{path}, {old_modify_time} -> {modify_time}, {old_checksum} -> {checksum}")
+                        delete_video(session, path)
                     # 需要新增，下面进行预处理
                     # 检查是否为重复视频，如果是则跳过feature提取，直接添加记录
                     is_duplicate = check_duplicate_video(session, path, modify_time, checksum, auto_add=True)

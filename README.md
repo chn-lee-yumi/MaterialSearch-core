@@ -24,6 +24,8 @@ pip3 install -U build twine packaging
 python3 -m build
 python3 -m twine upload --repository testpypi dist/* --verbose
 python3 -m pip install -U --index-url https://test.pypi.org/simple/ --no-deps materialsearch-core
+# or
+python3 -m pip install --force-reinstall --no-deps dist/materialsearch_core-*.whl
 ```
 
 ### Production Environment
