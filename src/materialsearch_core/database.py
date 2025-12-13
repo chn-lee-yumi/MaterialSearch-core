@@ -1,5 +1,6 @@
 """
 数据库操作相关函数
+TODO: FAISS，IndexFlatIP+IndexIDMap
 """
 import datetime
 import logging
