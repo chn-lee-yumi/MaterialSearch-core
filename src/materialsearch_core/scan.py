@@ -1,3 +1,6 @@
+"""
+扫描模块，负责扫描指定目录下的图片和视频文件，处理并存储到数据库中。
+"""
 import datetime
 import logging
 import pickle
@@ -41,7 +44,7 @@ class Scanner:
         self.is_continue_scan = False
         self.logger = logging.getLogger(__name__)
         self.temp_file = f"{TEMP_PATH}/assets.pickle"
-        self.assets = dict()
+        self.assets = {}
 
         # 自动扫描时间
         self.start_time = datetime.time(*AUTO_SCAN_START_TIME)
@@ -97,7 +100,7 @@ class Scanner:
         """
         过滤跳过的路径
         """
-        if type(path) == str:
+        if isinstance(path, str):  # 转换为Path对象
             path = Path(path)
         wrong_ext = path.suffix.lower() not in self.extensions
         skip = any((path.is_relative_to(p) for p in self.skip_paths))
@@ -161,7 +164,7 @@ class Scanner:
         """
         遍历文件并将符合条件的文件加入 assets 集合
         """
-        self.assets = dict()
+        self.assets = {}
         paths = [Path(i) for i in ASSETS_PATH if i]
         # 遍历根目录及其子目录下的所有文件
         for path in paths:
@@ -227,10 +230,10 @@ class Scanner:
                     image_batch_dict[path] = (modify_time, checksum)
                     # 达到SCAN_PROCESS_BATCH_SIZE再进行批量处理
                     if len(image_batch_dict) == SCAN_PROCESS_BATCH_SIZE:
-                        self.handle_image_batch(session, image_batch_dict)
+                        self.handle_image_batch(session, image_batch_dict)  # handle_image_batch 会执行 del self.assets[path]
                         image_batch_dict = {}
                     continue
-                elif path.lower().endswith(VIDEO_EXTENSIONS):  # 视频
+                if path.lower().endswith(VIDEO_EXTENSIONS):  # 视频
                     not_modified = delete_video_if_changed(session, path, checksum)
                     if not_modified:
                         del self.assets[path]
@@ -244,7 +247,7 @@ class Scanner:
                     add_video(session, path, modify_time, checksum, process_video(path))
                     self.total_video_frames = get_video_frame_count(session)
                     self.total_videos = get_video_count(session)
-                del self.assets[path]
+                    del self.assets[path]
             if len(image_batch_dict) != 0:  # 最后如果图片数量没达到SCAN_PROCESS_BATCH_SIZE，也进行一次处理
                 self.handle_image_batch(session, image_batch_dict)
             # 收尾工作

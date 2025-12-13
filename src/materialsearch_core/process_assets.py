@@ -1,4 +1,6 @@
-# 预处理图片和视频，建立索引，加快搜索速度
+"""
+预处理图片和视频，建立索引，加快搜索速度
+"""
 import logging
 import traceback
 
@@ -36,7 +38,7 @@ def get_image_feature(images):
     except Exception as e:
         logger.exception("处理图片报错：type=%s error=%s" % (type(images), repr(e)))
         traceback.print_stack()
-        if type(images) == list:
+        if isinstance(images, list) and images:
             print("images[0]:", images[0])
         else:
             print("images:", images)

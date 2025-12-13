@@ -1,3 +1,6 @@
+"""
+一些通用的工具函数
+"""
 import hashlib
 import logging
 import platform
@@ -21,7 +24,7 @@ def get_hash(bytesio):
     :return: string, 十六进制字符串
     """
     _hash = hashlib.sha1()
-    if type(bytesio) is bytes:
+    if isinstance(bytesio, bytes):
         _hash.update(bytesio)
         return _hash.hexdigest()
     try:
@@ -106,7 +109,7 @@ def crop_video(input_file, output_file, start_time, end_time):
         output_file
     ]
     logger.info("Crop video:", " ".join(command))
-    subprocess.run(command)
+    subprocess.run(command, check=True)
 
 
 def create_checkerboard(size, block_size=16, color1=(220, 220, 220), color2=(255, 255, 255)):

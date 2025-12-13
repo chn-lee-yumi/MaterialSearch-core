@@ -1,3 +1,6 @@
+"""
+数据库操作相关函数
+"""
 import datetime
 import logging
 
@@ -77,14 +80,14 @@ def delete_video_if_changed(session: Session, path: str, checksum: str) -> bool:
 
 def get_video_paths(session: Session, filter_path: str = None, start_time: int = None, end_time: int = None):
     """获取所有视频的路径，支持通过路径和修改时间筛选"""
-    query = session.query(Video.path, Video.modify_time).distinct()
+    query = session.query(Video.path).distinct()
     if filter_path:
         query = query.filter(Video.path.like("%" + filter_path + "%"))
     if start_time:
         query = query.filter(Video.modify_time >= datetime.datetime.fromtimestamp(start_time))
     if end_time:
         query = query.filter(Video.modify_time <= datetime.datetime.fromtimestamp(end_time))
-    for path, modify_time in query:
+    for (path,) in query:
         yield path
 
 

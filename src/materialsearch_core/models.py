@@ -1,3 +1,6 @@
+"""
+定义数据库模型
+"""
 import os
 
 from sqlalchemy import BINARY, Column, DateTime, Integer, String, ForeignKey
@@ -29,6 +32,7 @@ def create_tables():
 
 
 class Image(BaseModel):
+    """图片表"""
     __tablename__ = "image"
     id = Column(Integer, primary_key=True, index=True)
     path = Column(String(4096), index=True)  # 文件路径
@@ -37,6 +41,7 @@ class Image(BaseModel):
 
 
 class ImageFeatures(BaseModel):
+    """图片特征表"""
     __tablename__ = "image_features"
     id = Column(Integer, primary_key=True, index=True)
     checksum = Column(String(40), ForeignKey("image.checksum", ondelete="CASCADE"), index=True)  # 文件SHA1
@@ -44,6 +49,7 @@ class ImageFeatures(BaseModel):
 
 
 class Video(BaseModel):
+    """视频表"""
     __tablename__ = "video"
     id = Column(Integer, primary_key=True, index=True)
     path = Column(String(4096), index=True)  # 文件路径
@@ -52,6 +58,7 @@ class Video(BaseModel):
 
 
 class VideoFeatures(BaseModel):
+    """视频特征表"""
     __tablename__ = "video_features"
     id = Column(Integer, primary_key=True, index=True)
     checksum = Column(String(40), ForeignKey("video.checksum", ondelete="CASCADE"), index=True)  # 文件SHA1

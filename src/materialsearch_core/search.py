@@ -1,3 +1,6 @@
+"""
+搜索相关功能
+"""
 import base64
 import logging
 import time
@@ -126,17 +129,17 @@ def get_index_pairs(scores):
     :return: 返回连续的帧序号列表，如第2-5帧、第11-13帧都符合搜索内容，则返回[(2,5),(11,13)]
     """
     indexes = []
-    for i in range(len(scores)):
-        if scores[i]:
+    for i, score in enumerate(scores):
+        if score:
             indexes.append(i)
     result = []
     start_index = -1
-    for i in range(len(indexes)):
+    for i, index in enumerate(indexes):
         if start_index == -1:
-            start_index = indexes[i]
-        elif indexes[i] - indexes[i - 1] > 2:  # 允许中间空1帧
+            start_index = index
+        elif index - indexes[i - 1] > 2:  # 允许中间空1帧
             result.append((start_index, indexes[i - 1]))
-            start_index = indexes[i]
+            start_index = index
     if start_index != -1:
         result.append((start_index, indexes[-1]))
     return result
