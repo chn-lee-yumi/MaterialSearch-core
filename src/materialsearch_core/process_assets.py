@@ -241,8 +241,14 @@ def match_batch(
     :param negative_threshold: int/float, 反向提示分数阈值，低于此分数才显示
     :return: <class 'numpy.nparray'>, 提示词和每个图片余弦相似度列表，shape=(n, )，如果小于正向提示分数阈值或大于反向提示分数阈值则会置0
     """
+    # 把feature都reshape成(1, m)的形状，方便矩阵运算，兼容不同版本造成的shape不一致的问题
+    if positive_feature is not None:
+        positive_feature = np.asarray(positive_feature).reshape(1, -1)
+    if negative_feature is not None:
+        negative_feature = np.asarray(negative_feature).reshape(1, -1)
+    # 计算score
     if positive_feature is None:  # 没有正向feature就把分数全部设成1
-        positive_scores = np.ones(len(image_features))
+        positive_scores = np.ones((len(image_features), 1))
     else:
         positive_scores = image_features @ positive_feature.T
     if negative_feature is not None:
@@ -251,4 +257,4 @@ def match_batch(
     scores = np.where(positive_scores < positive_threshold / 100, 0, positive_scores)
     if negative_feature is not None:
         scores = np.where(negative_scores > negative_threshold / 100, 0, scores)
-    return scores.squeeze(-1)
+    return scores.reshape(-1)
