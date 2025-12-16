@@ -2,6 +2,8 @@
 
 Core Python library for [**MaterialSearch**](https://github.com/chn-lee-yumi/MaterialSearch) project.
 
+TODO: Not compatible with new PyTorch / Transformers version yet.
+
 ## Installation
 
 ```bash
