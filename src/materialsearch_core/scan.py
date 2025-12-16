@@ -21,6 +21,7 @@ from materialsearch_core.database import (
     add_video,
     check_duplicate_image,
     check_duplicate_video,
+    cleanup_dirty_data
 )
 from materialsearch_core.models import create_tables, DatabaseSession
 from materialsearch_core.process_assets import process_images, process_video
@@ -280,6 +281,7 @@ class Scanner:
             self.total_video_frames = get_video_frame_count(session)
         self.scanning_files = 0
         self.scanned_files = 0
+        cleanup_dirty_data(session)  # 清理脏数据
         self.logger.info("扫描完成，用时%d秒" % int(time.time() - self.scan_start_time))
         clean_cache()  # 清空搜索缓存
         self.is_scanning = False

@@ -186,6 +186,8 @@ def search_video_by_feature(
     with DatabaseSession() as session:
         for path in get_video_paths(session, filter_path, modify_time_start, modify_time_end):  # 逐个视频比对
             frame_times, features = get_frame_times_features_by_path(session, path)
+            if not features:
+                continue
             features = np.frombuffer(b"".join(features), dtype=np.float32).reshape(len(features), -1)
             scores = match_batch(positive_feature, negative_feature, features, positive_threshold, negative_threshold)
             index_pairs = get_index_pairs(scores)

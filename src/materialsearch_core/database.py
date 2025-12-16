@@ -108,6 +108,8 @@ def get_video_paths(session: Session, filter_path: str = None, start_time: int =
 def get_frame_times_features_by_path(session: Session, path: str):
     """获取路径对应视频的features"""
     query = session.query(VideoFeatures.frame_time, VideoFeatures.features).join(Video, VideoFeatures.checksum == Video.checksum).filter(Video.path == path).order_by(VideoFeatures.frame_time).all()
+    if not query:  # path不存在或path对应的视频没有features
+        return [], []
     frame_times, features = zip(*query)
     return frame_times, features
 
@@ -269,3 +271,40 @@ def search_video_by_path(session: Session, path: str):
         .order_by(asc(Video.path))
         .all()
     )
+
+
+def cleanup_dirty_data(session: Session):
+    """
+    清理数据库中的脏数据：
+    1. 删除在 Video 中存在、但在 VideoFeatures 中没有对应 checksum 的视频记录
+    2. 删除在 VideoFeatures 中存在、但在 Video 中没有任何对应 checksum 的特征记录
+    3. 对 Image / ImageFeatures 做同样处理
+    """
+    # 所有视频的 checksum
+    video_checksums = {c for (c,) in session.query(Video.checksum).distinct()}
+    # 所有视频特征的 checksum
+    video_feature_checksums = {c for (c,) in session.query(VideoFeatures.checksum).distinct()}
+    # Video 有，VideoFeatures 没有，则删除这些 Video
+    orphan_video_checksums = video_checksums - video_feature_checksums
+    if orphan_video_checksums:
+        logger.warning(f"清理没有特征的视频条目，checksum 数量：{len(orphan_video_checksums)}")
+        session.query(Video).filter(Video.checksum.in_(orphan_video_checksums)).delete()
+    # VideoFeatures 有，Video 没有，则删除这些 VideoFeatures
+    orphan_video_feature_checksums = video_feature_checksums - video_checksums
+    if orphan_video_feature_checksums:
+        logger.warning(f"清理孤立的视频特征条目，checksum 数量：{len(orphan_video_feature_checksums)}")
+        session.query(VideoFeatures).filter(VideoFeatures.checksum.in_(orphan_video_feature_checksums)).delete()
+    # 图片相关
+    image_checksums = {c for (c,) in session.query(Image.checksum).distinct()}
+    image_feature_checksums = {c for (c,) in session.query(ImageFeatures.checksum).distinct()}
+    # Image 有，ImageFeatures 没有
+    orphan_image_checksums = image_checksums - image_feature_checksums
+    if orphan_image_checksums:
+        logger.warning(f"清理没有特征的图片条目，checksum 数量：{len(orphan_image_checksums)}")
+        session.query(Image).filter(Image.checksum.in_(orphan_image_checksums)).delete()
+    # ImageFeatures 有，Image 没有
+    orphan_image_feature_checksums = image_feature_checksums - image_checksums
+    if orphan_image_feature_checksums:
+        logger.warning(f"清理孤立的图片特征条目，checksum 数量：{len(orphan_image_feature_checksums)}")
+        session.query(ImageFeatures).filter(ImageFeatures.checksum.in_(orphan_image_feature_checksums)).delete(synchronize_session=False)
+    session.commit()
