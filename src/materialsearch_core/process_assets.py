@@ -225,6 +225,101 @@ def match_text_and_image(text_feature, image_feature):
     return score
 
 
+# 以下为FAISS测试代码
+# def cache_faiss_index(func):
+#     """
+#     装饰器：缓存FAISS索引
+#     """
+#     cache = {}
+#     stats = {'hits': 0, 'misses': 0}
+#
+#     @wraps(func)
+#     def wrapper(features, *args, **kwargs):
+#         # 生成缓存键（使用特征的shape和部分数据）
+#         key = f"{features.shape}_{features[0][0]}_{features[-1][-1]}_{features.mean()}"
+#
+#         if key in cache:
+#             stats['hits'] += 1
+#             print("FAISS index cache hit")
+#             return cache[key]
+#
+#         stats['misses'] += 1
+#         result = func(features, *args, **kwargs)
+#         cache[key] = result
+#
+#         # 限制缓存大小
+#         if len(cache) > 10:
+#             # 移除第一个键
+#             first_key = next(iter(cache))
+#             del cache[first_key]
+#
+#         return result
+#
+#     wrapper.cache_info = lambda: stats
+#     wrapper.clear_cache = lambda: cache.clear()
+#
+#     return wrapper
+#
+#
+# @cache_faiss_index
+# def get_faiss_index(image_features):
+#     image_features_f32 = image_features.astype(np.float32)
+#     d = image_features_f32.shape[1]
+#     index = faiss.IndexFlatIP(d)
+#     index.add(image_features_f32)
+#     return index
+
+# @cache_faiss_index
+# def get_faiss_index_pq(image_features):
+#     image_features_f32 = image_features.astype(np.float32)
+#     d = image_features_f32.shape[1]
+#
+#     # 设置PQ参数
+#     m = 8  # 子空间数量（通常设置为d的约1/4）
+#     nbits = 8  # 每个子空间的比特数（精度越低速度越快）
+#
+#     quantizer = faiss.IndexFlatIP(d)
+#     index = faiss.IndexIVFPQ(quantizer, d, 100, m, nbits)  # 100个聚类中心
+#
+#     # 需要训练
+#     index.train(image_features_f32)
+#     index.add(image_features_f32)
+#
+#     return index
+#
+#
+# @cache_faiss_index
+# def get_faiss_index_ivf(image_features):
+#     image_features_f32 = image_features.astype(np.float32)
+#     d = image_features_f32.shape[1]
+#     nlist = min(100, image_features_f32.shape[0] // 40)  # 聚类数量
+#
+#     quantizer = faiss.IndexFlatIP(d)
+#     index = faiss.IndexIVFFlat(quantizer, d, nlist, faiss.METRIC_INNER_PRODUCT)
+#
+#     # 需要训练
+#     index.train(image_features_f32)
+#     index.add(image_features_f32)
+#
+#     # 搜索时控制搜索的聚类数量（值越小越快，精度越低）
+#     index.nprobe = 5  # 默认搜索5个最近的聚类
+#     return index
+#
+#
+# @cache_faiss_index
+# def get_faiss_index_hnsw(image_features):
+#     image_features_f32 = image_features.astype(np.float32)
+#     d = image_features_f32.shape[1]
+#
+#     M = 16  # 每个节点的连接数（越大越准越慢）
+#     index = faiss.IndexHNSWFlat(d, M, faiss.METRIC_INNER_PRODUCT)
+#     index.hnsw.efConstruction = 40  # 构建时的邻居数量
+#     index.hnsw.efSearch = 16  # 搜索时的邻居数量（越小越快）
+#
+#     index.add(image_features_f32)
+#     return index
+
+
 def match_batch(
         positive_feature,
         negative_feature,
@@ -240,12 +335,34 @@ def match_batch(
     :param positive_threshold: int/float, 正向提示分数阈值，高于此分数才显示
     :param negative_threshold: int/float, 反向提示分数阈值，低于此分数才显示
     :return: <class 'numpy.nparray'>, 提示词和每个图片余弦相似度列表，shape=(n, )，如果小于正向提示分数阈值或大于反向提示分数阈值则会置0
+    TODO: FAISS（试了一下，两万多张图没有任何效果。不知道数十万效果如何。暂时无法测试。） 记得Mac需要安装1.7.0版本，否则会 segmentation fault
     """
     # 把feature都reshape成(1, m)的形状，方便矩阵运算，兼容不同版本造成的shape不一致的问题
     if positive_feature is not None:
         positive_feature = np.asarray(positive_feature).reshape(1, -1)
     if negative_feature is not None:
         negative_feature = np.asarray(negative_feature).reshape(1, -1)
+
+    # FAISS 实现
+    # n_vectors = len(image_features)
+    # index = get_faiss_index(image_features)
+    # # 计算score
+    # scores = np.ones(n_vectors, dtype=np.float32)
+    # if positive_feature is not None:
+    #     positive_feature_f32 = np.asarray(positive_feature, dtype=np.float32).reshape(1, -1)
+    #     positive_scores, _ = index.search(positive_feature_f32, n_vectors)
+    #     scores = positive_scores.flatten()
+    # # 根据阈值进行过滤
+    # pos_thresh = positive_threshold / 100
+    # scores = np.where(scores < pos_thresh, 0, scores)
+    # if negative_feature is not None:
+    #     negative_feature_f32 = np.asarray(negative_feature, dtype=np.float32).reshape(1, -1)
+    #     negative_scores, _ = index.search(negative_feature_f32, n_vectors)
+    #     negative_scores = negative_scores.flatten()
+    #     neg_thresh = negative_threshold / 100
+    #     scores = np.where(negative_scores > neg_thresh, 0, scores)
+    # return scores
+
     # 计算score
     if positive_feature is None:  # 没有正向feature就把分数全部设成1
         positive_scores = np.ones((len(image_features), 1))
