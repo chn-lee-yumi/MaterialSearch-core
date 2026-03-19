@@ -47,6 +47,7 @@ class Scanner:
         self.is_continue_scan = False
         self.logger = logging.getLogger(__name__)
         self.temp_file = f"{TEMP_PATH}/assets.pickle"
+        self.force_stop = False
         self.assets = {}
 
         # 自动扫描时间
@@ -204,6 +205,10 @@ class Scanner:
                 self.scanned_files += 1
                 if self.scanned_files % AUTO_SAVE_INTERVAL == 0:  # 每扫描 AUTO_SAVE_INTERVAL 个文件重新save一下
                     self.save_assets()
+                if self.force_stop:
+                    self.logger.info(f"强制停止扫描")
+                    self.force_stop = False
+                    break
                 if auto and not self.is_current_auto_scan_time():  # 如果是自动扫描，判断时间自动停止
                     self.logger.info(f"超出自动扫描时间，停止扫描")
                     break
@@ -212,16 +217,16 @@ class Scanner:
                     continue
                 modify_time = self.assets[path]
                 checksum = None
-                if modify_time is None:
+                if modify_time is None:  # 对于没有修改时间的文件，直接计算hash
                     checksum = get_file_hash(path)
                 # 如果数据库里有这个文件，并且没有发生变化，则跳过，否则进行预处理并入库
                 if path.lower().endswith(IMAGE_EXTENSIONS):  # 图片
                     old_modify_time, old_checksum = get_image_modify_time_and_hash(session, path)
-                    # 先判断修改时间是否有变化
+                    # 先判断修改时间是否有变化，没变化直接跳过
                     if old_modify_time is not None and modify_time == old_modify_time:  # 文件未修改，跳过
                         del self.assets[path]
                         continue
-                    # 然后判断hash是否有变化
+                    # 如果修改时间变化了，然后判断hash是否有变化
                     if checksum is None:
                         checksum = get_file_hash(path)
                     if checksum == old_checksum:  # 文件未修改，跳过
@@ -245,11 +250,11 @@ class Scanner:
                     continue
                 if path.lower().endswith(VIDEO_EXTENSIONS):  # 视频
                     old_modify_time, old_checksum = get_video_modify_time_and_hash(session, path)
-                    # 先判断修改时间是否有变化
+                    # 先判断修改时间是否有变化，没变化直接跳过
                     if old_modify_time is not None and modify_time == old_modify_time:  # 文件未修改，跳过
                         del self.assets[path]
                         continue
-                    # 然后判断hash是否有变化
+                    # 如果修改时间变化了，再然后判断hash是否有变化
                     if checksum is None:
                         checksum = get_file_hash(path)
                     if checksum == old_checksum:  # 文件未修改，跳过
