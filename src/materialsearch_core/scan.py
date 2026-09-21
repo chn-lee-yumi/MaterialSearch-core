@@ -61,6 +61,7 @@ class Scanner:
         self.extensions = IMAGE_EXTENSIONS + VIDEO_EXTENSIONS
 
     def init(self):
+        os.makedirs(f'{TEMP_PATH}', exist_ok=True)
         create_tables()
         with DatabaseSession() as session:
             self.total_images = get_image_count(session)

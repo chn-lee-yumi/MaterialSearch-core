@@ -1,4 +1,5 @@
 .idea/
 dist/
 src/materialsearch_core.egg-info/
+__pycache__/
 

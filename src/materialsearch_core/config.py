@@ -34,12 +34,10 @@ AUTO_SAVE_INTERVAL = int(os.getenv('AUTO_SAVE_INTERVAL', '100'))  # 扫描自动
 # 4G显存推荐参数：小模型，SCAN_PROCESS_BATCH_SIZE=6
 # 8G显存推荐参数：小模型，SCAN_PROCESS_BATCH_SIZE=12
 # 不同模型不同显存大小请自行摸索搭配。
-# 中文小模型： "OFA-Sys/chinese-clip-vit-base-patch16"
-# 英文小模型： "openai/clip-vit-base-patch16"
+# 中文小模型："OFA-Sys/chinese-clip-vit-base-patch16"
+# 英文小模型："openai/clip-vit-base-patch16"
 # 英文大模型："openai/clip-vit-large-patch14-336"
-# 注：下面的模型没有经过测试
-# 有人反馈这些模型不错：laion/CLIP-ViT-H-14-laion2B-s32B-b79K jinaai/jina-clip-v2
-# 25年底新出的模型也可以尝试：qihoo360/fg-clip2-base
+# 英文超大模型："laion/CLIP-ViT-H-14-laion2B-s32B-b79K"
 MODEL_NAME = os.getenv('MODEL_NAME', "OFA-Sys/chinese-clip-vit-base-patch16")  # CLIP模型
 DEVICE = os.getenv('DEVICE', 'auto')  # 推理设备，auto/cpu/cuda/mps
 
