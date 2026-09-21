@@ -1,5 +1,7 @@
 # MaterialSearch Core
 
+[**Sponsor this project**](https://github.com/sponsors/chn-lee-yumi)
+
 Core Python library for [**MaterialSearch**](https://github.com/chn-lee-yumi/MaterialSearch) project.
 
 TODO: Not compatible with new PyTorch / Transformers version yet.
